@@ -12,7 +12,7 @@ app.secret_key = 'ae11e0007d644e9193d39a49ec3878d1' # uuid.uuid4().hex
 DB_HOST = "localhost"
 DB_NAME = "antiminer"
 DB_USER = "postgres"
-DB_PASS = "123"
+DB_PASS = "123321azaz"
 
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
 
