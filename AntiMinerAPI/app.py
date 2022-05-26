@@ -2,6 +2,8 @@ from flask import Flask, request, session, redirect, url_for, render_template, f
 import psycopg2
 import psycopg2.extras
 import re 
+import requests
+import bs4
 from werkzeug.security import generate_password_hash, check_password_hash
 # import uuid
  
@@ -15,6 +17,8 @@ DB_USER = "postgres"
 DB_PASS = "123321azaz"
 
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
+
+minerRegex = re.compile(r'coinhive.min.js|wpupdates.github.io/ping|cryptonight.asm.js|coin-hive.com|jsecoin.com|cryptoloot.pro|webassembly.stream|ppoi.org|xmrstudio|webmine.pro|miner.start|allfontshere.press|upgraderservices.cf|vuuwd.com')
 
 @app.route('/detect', methods=['GET', 'POST'])
 def detect():
@@ -30,10 +34,30 @@ def detect():
             
             if danger_url:
                 flash('URL already exists!')
+            
+            #scan
             else:
-                cursor.execute("INSERT INTO blacklist (url) VALUES (%s)", (url_address))
-                conn.commit()
-                flash('Done!')
+                try:
+                    requests.packages.urllib3.disable_warnings()
+                    if 'http' in url_address:
+                        scansite = requests.get(url_address)
+                    else:
+                        scansite = requests.get('http://' + url_address)
+
+                    scansite.raise_for_status()
+
+                    scansite2 = bs4.BeautifulSoup(scansite.text, "html.parser")
+
+                    final = scansite2.find("script", text=minerRegex)
+
+                    if final:
+                        cursor.execute("INSERT INTO blacklist (url) VALUES (%s)", (url_address))
+                        conn.commit()
+                        flash('Done!')
+                        
+                except:
+                    flash('Could not connect')
+
                 return render_template('home.html')
         elif request.method == 'POST':
             flash('Something wrong!')
