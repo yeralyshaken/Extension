@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+
+{% block title %}Blacklist Page{% endblock %}
+
+{% block content %}
+<h1 class="h2">Blacklist URLs</h1>
+
+<div class="field">
+    {% if urls %}
+        {% for url in urls %}
+        <p class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ url }}
+        </p>
+        {% endfor %}
+    {% endif %}
+</div>
+
+{% endblock %}

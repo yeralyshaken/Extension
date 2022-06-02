@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block title %}Page{% endblock %}
+
+{% block content %}
+<h1 class="h2">CryptoJacking detection</h1>
+<!-- <p>Insert URL</p> -->
+
+<div class="field">
+    <form class="form-group" action="{{ url_for('detect') }}" method="post">
+        <label>Insert URL address</label>
+        <input type="text" class="form-control" name="url" placeholder="address" id="url" required>
+        <br>
+        
+        <input type="submit" value="Check" class="form-control btn btn-success " name="">
+    </form>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">×</span>
+        </button>
+    </div>
+</div>
+
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+{% endblock %}

@@ -1,9 +1,11 @@
-from flask import Flask, request, session, redirect, url_for, render_template, flash
+import json
+from flask import Flask, request, session, redirect, url_for, render_template, flash, Response
 import psycopg2
 import psycopg2.extras
 import re 
 import requests
 import bs4
+import sys
 from werkzeug.security import generate_password_hash, check_password_hash
 # import uuid
  
@@ -20,6 +22,22 @@ conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_
 
 minerRegex = re.compile(r'coinhive.min.js|wpupdates.github.io/ping|cryptonight.asm.js|coin-hive.com|jsecoin.com|cryptoloot.pro|webassembly.stream|ppoi.org|xmrstudio|webmine.pro|miner.start|allfontshere.press|upgraderservices.cf|vuuwd.com')
 
+@app.route('/blacklist', methods=['GET', 'POST'])
+def blacklist():
+    if 'loggedin' in session:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cursor.execute("SELECT url FROM blacklist")
+        urls = cursor.fetchall()
+        
+        urls = [url[0] for url in urls]
+
+        if request.method == 'POST':
+            return Response(json.dumps(urls),  mimetype='application/json')
+        
+        return render_template('blacklist.html', urls=urls)
+
+    return redirect(url_for('login'))
+
 @app.route('/detect', methods=['GET', 'POST'])
 def detect():
     if 'loggedin' in session:
@@ -30,7 +48,7 @@ def detect():
 
             cursor.execute('SELECT * FROM blacklist WHERE url = %s', (url_address,))
             danger_url = cursor.fetchone()
-            print(danger_url)
+            print(url_address)
             
             if danger_url:
                 flash('URL already exists!')
@@ -53,20 +71,22 @@ def detect():
                     if final:
                         cursor.execute("INSERT INTO blacklist (url) VALUES (%s)", (url_address))
                         conn.commit()
-                        flash('Done!')
-                        
+                        flash("{} added to blasklist!".format(url_address))
+                    else:
+                        flash('Could not found any problems!')
                 except:
-                    flash('Could not connect')
-
-                return render_template('home.html')
+                    flash('Could not connect, try to use correct url')
         elif request.method == 'POST':
             flash('Something wrong!')
-        return render_template('home.html')
+        return render_template('detect.html')
 
     return redirect(url_for('login'))
 
-
 @app.route('/')
+def main_page():
+    return redirect(url_for('home'))
+
+@app.route('/home')
 def home():
     if 'loggedin' in session:
         return render_template('home.html', username=session['username'])
