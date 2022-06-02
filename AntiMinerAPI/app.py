@@ -5,7 +5,7 @@ import psycopg2.extras
 import re 
 import requests
 import bs4
-import sys
+from urllib.parse import urlparse
 from werkzeug.security import generate_password_hash, check_password_hash
 # import uuid
  
@@ -46,7 +46,7 @@ def detect():
         if request.method == 'POST' and 'url' in request.form:
             url_address = request.form['url']
 
-            cursor.execute('SELECT * FROM blacklist WHERE url = %s', (url_address,))
+            cursor.execute('SELECT * FROM blacklist WHERE %s ~ url or url ~ %s', (url_address, url_address))
             danger_url = cursor.fetchone()
             print(url_address)
             
