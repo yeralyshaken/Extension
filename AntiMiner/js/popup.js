@@ -3,6 +3,7 @@
     'use strict';
     
     var utils;
+    var url = "https://www.google.com/";
 
     function initPopupPage() {
         utils = chrome.extension.getBackgroundPage().utils;
@@ -23,37 +24,53 @@
             window.close();
         });
 
-        document.getElementById('settingsBtn').addEventListener('click', function (e) {
-            chrome.runtime.openOptionsPage();
+        document.getElementById('singin').addEventListener('click', function (e) {
+            window.open(url, '_blank').focus();
+            // chrome.runtime.sendMessage({action: 'mbStart'}, utils.noop);
+            chrome.extension.getBackgroundPage().updateIcon(true);
+            chrome.tabs.reload();
             window.close();
         });
 
-        document.getElementById('addWlist').addEventListener('click', function (e) {
-            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                if(!tabs) {
-                    return;
-                }
-                let ctab = tabs[0];
-                if(utils.isSpecialTab(ctab)) {
-                    return;
-                }
-                chrome.runtime.sendMessage({action: 'addWlist', tab : ctab}, utils.noop);
-                chrome.tabs.reload(ctab.tabId);
-                window.close();
-            });
+        document.getElementById('dashboard').addEventListener('click', function (e) {
+            window.open(url, '_blank').focus();
+            // chrome.runtime.sendMessage({action: 'mbPause'}, utils.noop);
+            chrome.extension.getBackgroundPage().updateIcon(false);
+            chrome.tabs.reload();
+            window.close();
         });
 
-        document.getElementById('removeWlist').addEventListener('click', function (e) {
-            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                if(!tabs) {
-                    return;
-                }
-                let ctab = tabs[0];
-                chrome.runtime.sendMessage({action: 'removeWlist', tab : ctab}, utils.noop);
-                chrome.tabs.reload(ctab.tabId);
-                window.close();
-            });
-        });
+        // document.getElementById('settingsBtn').addEventListener('click', function (e) {
+        //     chrome.runtime.openOptionsPage();
+        //     window.close();
+        // });
+
+        // document.getElementById('addWlist').addEventListener('click', function (e) {
+        //     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        //         if(!tabs) {
+        //             return;
+        //         }
+        //         let ctab = tabs[0];
+        //         if(utils.isSpecialTab(ctab)) {
+        //             return;
+        //         }
+        //         chrome.runtime.sendMessage({action: 'addWlist', tab : ctab}, utils.noop);
+        //         chrome.tabs.reload(ctab.tabId);
+        //         window.close();
+        //     });
+        // });
+
+        // document.getElementById('removeWlist').addEventListener('click', function (e) {
+        //     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        //         if(!tabs) {
+        //             return;
+        //         }
+        //         let ctab = tabs[0];
+        //         chrome.runtime.sendMessage({action: 'removeWlist', tab : ctab}, utils.noop);
+        //         chrome.tabs.reload(ctab.tabId);
+        //         window.close();
+        //     });
+        // });
 
     }
 
@@ -63,16 +80,17 @@
                 return;
             }
             let ctab = tabs[0];
-            let domain = utils.getDomain(ctab.url);
-            let wlistStatus = utils.checkWhiteList(domain, chrome.extension.getBackgroundPage().mbSettings['mbWhiteList']);
+            initSuspendBtn(ctab.id);
+            // let domain = utils.getDomain(ctab.url);
+            // let wlistStatus = utils.checkWhiteList(domain, chrome.extension.getBackgroundPage().mbSettings['mbWhiteList']);
 
-            if(wlistStatus) {
-                setWlistStatus(true);
+            // if(wlistStatus) {
+            //     setWlistStatus(true);
                 
-            } else {
-                setWlistStatus(false);
-                initSuspendBtn(ctab.id);
-            }
+            // } else {
+            //     setWlistStatus(false);
+            //     initSuspendBtn(ctab.id);
+            // }
         });
     }
 
@@ -116,6 +134,8 @@
     function setBtnStatus(status) {
         document.getElementById('pauseButton').style.display = (status === true) ? '' : 'none';
         document.getElementById('startButton').style.display = (status === true) ? 'none' : '';
+        document.getElementById('singin').style.display = (status === true) ? '' : 'none';
+        document.getElementById('dashboard').style.display = (status === true) ? 'none' : '';
         document.getElementById('hidePs').style.display = (status === true) ? '' : 'none';
     }
 

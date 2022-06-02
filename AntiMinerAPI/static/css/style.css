@@ -39,6 +39,12 @@ body {
     border-radius: .25rem;
 }
 
+.field {
+    margin-top: 2%;
+    position: static;
+    /* background: #dadada; */
+}
+
 .main {
     margin-top: 50px;
 }
