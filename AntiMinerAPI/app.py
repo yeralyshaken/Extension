@@ -73,9 +73,10 @@ def detect():
                         conn.commit()
                         flash("{} added to blasklist!".format(url_address))
                     else:
-                        flash('Could not found any problems!')
+                        flash('Could not find any problems!')
                 except:
-                    flash('Could not connect, try to use correct url')
+                    flash('Could not connect')
+                    flash('Try to use correct url')
         elif request.method == 'POST':
             flash('Something wrong!')
         return render_template('detect.html')
@@ -84,7 +85,9 @@ def detect():
 
 @app.route('/')
 def main_page():
-    return redirect(url_for('home'))
+    if 'loggedin' in session:
+        return render_template('home.html', username=session['username'])
+    return render_template('welcome.html')
 
 @app.route('/home')
 def home():

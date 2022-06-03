@@ -1,5 +1,5 @@
 body {
-    background-color: #435165;
+    background: #141414;
     margin: 0;
 }
 
@@ -18,7 +18,7 @@ body {
     text-align: center;
     font-family: "vardhana", cursive;
     font-size: 35px;
-    background: linear-gradient(to bottom, #26882e 0%, #5b6d7c 100%);
+    background: linear-gradient(to bottom, #2196f3 0%, #141414 100%);
     color: #fff;
     position: relative;
     box-shadow: 1px 3px 14px rgba(0, 0, 0, .5);

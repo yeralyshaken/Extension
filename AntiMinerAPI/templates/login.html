@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/top.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css">
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet"
@@ -12,7 +13,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 </head>
 
-<body style="background-color:#ccc;">
+<body style="background-color:#141414;">
+    <div class="top">
+        <a href="/"><button class="button-9" role="button">Welcome Page</button></a>
+        <a href="{{ url_for('register') }}"><button class="button-9" role="button">Register</button></a>
+    </div>
+
     <div class="login-box">
         <div class="login-header">Login</div>
         <div class="login-body">
@@ -23,8 +29,8 @@
                 <label>Password</label>
                 <input type="password" class="form-control" name="password" placeholder="Password" id="password"
                     required><br>
-                <!-- <input type="checkbox" value="checked"><b>Remember</b> -->
-                <input type="submit" value="Login" class="form-control btn btn-success " name="">
+
+                <input type="submit" value="Login" class="form-control btn btn-primary " name="">
             </form>
             {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -38,9 +44,7 @@
             {% endfor %}
             {% endif %}
             {% endwith %}
-            <p style="padding:5px;">
-                <a href="{{ url_for('register') }}" class="btn btn-dark ">Register</a>
-            </p>
+            
         </div>
     </div>
 </body>
