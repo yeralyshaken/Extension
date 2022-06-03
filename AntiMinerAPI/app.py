@@ -48,7 +48,7 @@ def detect():
 
             cursor.execute('SELECT * FROM blacklist WHERE %s ~ url or url ~ %s', (url_address, url_address))
             danger_url = cursor.fetchone()
-            print(url_address)
+            # print(url_address)
             
             if danger_url:
                 flash('URL already exists!')
@@ -74,11 +74,14 @@ def detect():
                         flash("{} added to blasklist!".format(url_address))
                     else:
                         flash('Could not find any problems!')
+                        
                 except:
                     flash('Could not connect')
                     flash('Try to use correct url')
+
         elif request.method == 'POST':
-            flash('Something wrong!')
+            flash('Something is wrong!')
+        
         return render_template('detect.html')
 
     return redirect(url_for('login'))
