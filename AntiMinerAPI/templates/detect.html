@@ -9,11 +9,12 @@
 <div class="field">
     <form class="form-group" action="{{ url_for('detect') }}" method="post">
         <label>Insert URL address</label>
-        <input type="text" class="form-control" name="url" placeholder="address" id="url" required>
+        <input type="text" class="form-control" name="url" placeholder="url address" id="url" required>
         <br>
-        
+
         <input type="submit" value="Check" class="form-control btn btn-success " name="">
     </form>
+
     {% with messages = get_flashed_messages() %}
     {% if messages %}
     {% for message in messages %}
@@ -23,10 +24,16 @@
             <span aria-hidden="true">×</span>
         </button>
     </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
 </div>
 
-{% endfor %}
-{% endif %}
-{% endwith %}
+<div class="field">
+    <form class="form-group" action="{{ url_for('update_blacklist') }}" method="post">
+        <!-- <input type="submit" value="Update Blacklist" class="form-control btn btn-warning" name=""> -->
+        <!-- <button class="button-9" role="button">Update Blacklist</button> -->
+    </form>
+</div>
 
 {% endblock %}

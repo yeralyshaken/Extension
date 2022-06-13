@@ -7,6 +7,8 @@ import requests
 import bs4
 from urllib.parse import urlparse
 from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
+import datetime
 # import uuid
  
 app = Flask(__name__)
@@ -16,11 +18,98 @@ app.secret_key = 'ae11e0007d644e9193d39a49ec3878d1' # uuid.uuid4().hex
 DB_HOST = "localhost"
 DB_NAME = "antiminer"
 DB_USER = "postgres"
-DB_PASS = "123321azaz"
+DB_PASS = "123"
 
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
 
 minerRegex = re.compile(r'coinhive.min.js|wpupdates.github.io/ping|cryptonight.asm.js|coin-hive.com|jsecoin.com|cryptoloot.pro|webassembly.stream|ppoi.org|xmrstudio|webmine.pro|miner.start|allfontshere.press|upgraderservices.cf|vuuwd.com')
+
+lines = []
+with open("filters.txt") as f:
+    for line in f.readlines():
+        lines.append(line.rstrip())
+
+def encode_auth_token(user_id):
+    """
+    Generates the Auth Token
+    :return: string
+    """
+    try:
+        payload = {
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=5),
+            'iat': datetime.datetime.utcnow(),
+            'sub': user_id
+        }
+        return jwt.encode(
+            payload,
+            app.config.get('SECRET_KEY'),
+            algorithm='HS256'
+        )
+    except Exception as e:
+        return e
+
+@app.route('/auth', methods=['POST'])
+def auth():
+    resp = {"isSucces": False, "token": ""}
+
+    if 'token' in session:
+        resp["isSucces"] = True
+        resp["token"] = session['token']
+        return Response(json.dumps(resp),  mimetype='application/json')
+
+    else:
+        if request.method == 'POST' and 'username' in request.form:
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+            username = request.form['username']
+            password = request.form['password']
+            # print(password)
+    
+            cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
+            account = cursor.fetchone()
+    
+            if account:
+
+                password_rs = account['password']
+                # print(password_rs)
+                if check_password_hash(password_rs, password):
+
+                    session['loggedin'] = True
+                    session['id'] = account['id']
+                    session['username'] = account['username']
+                    session['token'] = encode_auth_token(account['id'])
+
+                    token = encode_auth_token(account['id'])
+                    resp["isSucces"] = True
+                    resp["token"] = token
+                    return Response(json.dumps(resp),  mimetype='application/json')
+                
+                else:
+                    resp["token"] = "400 Incorrect username/password!"
+                    return Response(json.dumps(resp),  mimetype='application/json')
+            
+            else:
+                resp["token"] = "404 User not found!"
+                return Response(json.dumps(resp),  mimetype='application/json')         
+
+@app.route('/update_blacklist', methods=['POST'])
+def update_blacklist():
+    if 'loggedin' in session:
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        newList = []
+        for line in lines:
+            if '#' in line or not line:
+                continue
+            newList.append("('{}')".format(line.replace('*', '').replace('/', '').replace('wss:', '').replace('ws:', '').replace(':', '')))
+
+        args = ','.join(newList)
+        print(args)
+        # cursor.executemany("INSERT INTO blacklist (url) VALUES %s", args)
+        # conn.commit()
+
+        return render_template('detect.html')
+    return redirect(url_for('login'))
 
 @app.route('/blacklist', methods=['GET', 'POST'])
 def blacklist():
@@ -46,12 +135,16 @@ def detect():
         if request.method == 'POST' and 'url' in request.form:
             url_address = request.form['url']
 
-            cursor.execute('SELECT * FROM blacklist WHERE %s ~ url or url ~ %s', (url_address, url_address))
+            url_to_query = url_address.replace('http://', '').replace('https://', '').replace('/', '')
+            query = "SELECT * FROM blacklist WHERE '{}' LIKE '%' || url || '%' or url LIKE '%' || '{}' || '%'".format(url_to_query, url_to_query)
+            cursor.execute(query)
+            # cursor.execute('SELECT * FROM blacklist WHERE %s ~ url or url ~ %s', (url_address, url_address))
             danger_url = cursor.fetchone()
+            # print(url_to_query)
             # print(url_address)
             
             if danger_url:
-                flash('URL already exists!')
+                flash('URL already exists in blacklist!')
             
             #scan
             else:
@@ -97,7 +190,7 @@ def home():
     if 'loggedin' in session:
         return render_template('home.html', username=session['username'])
     return redirect(url_for('login'))
- 
+
 @app.route('/login/', methods=['GET', 'POST'])
 def login():
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -117,6 +210,7 @@ def login():
                 session['loggedin'] = True
                 session['id'] = account['id']
                 session['username'] = account['username']
+                session['token'] = encode_auth_token(account['id'])
                 
                 return redirect(url_for('home'))
             else:

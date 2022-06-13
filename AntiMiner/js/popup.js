@@ -3,7 +3,7 @@
     'use strict';
     
     var utils;
-    var url = "https://www.google.com/";
+    var url = "https://9e00-5-251-207-66.eu.ngrok.io/login";
 
     function initPopupPage() {
         utils = chrome.extension.getBackgroundPage().utils;
@@ -147,4 +147,7 @@
         initPopupPage();
     });
 
+    function getToken(){
+        
+    }
 }());
