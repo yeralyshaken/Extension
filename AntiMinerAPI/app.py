@@ -18,16 +18,11 @@ app.secret_key = 'ae11e0007d644e9193d39a49ec3878d1' # uuid.uuid4().hex
 DB_HOST = "localhost"
 DB_NAME = "antiminer"
 DB_USER = "postgres"
-DB_PASS = "123"
+DB_PASS = "123321azaz"
 
 conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_HOST)
 
 minerRegex = re.compile(r'coinhive.min.js|wpupdates.github.io/ping|cryptonight.asm.js|coin-hive.com|jsecoin.com|cryptoloot.pro|webassembly.stream|ppoi.org|xmrstudio|webmine.pro|miner.start|allfontshere.press|upgraderservices.cf|vuuwd.com')
-
-lines = []
-with open("filters.txt") as f:
-    for line in f.readlines():
-        lines.append(line.rstrip())
 
 def encode_auth_token(user_id):
     """
@@ -52,7 +47,8 @@ def encode_auth_token(user_id):
 def auth():
     resp = {"isSucces": False, "token": ""}
 
-    if 'token' in session:
+    if 'loggedin' in session:
+        print('auth')
         resp["isSucces"] = True
         resp["token"] = session['token']
         return Response(json.dumps(resp),  mimetype='application/json')
@@ -85,31 +81,15 @@ def auth():
                     return Response(json.dumps(resp),  mimetype='application/json')
                 
                 else:
-                    resp["token"] = "400 Incorrect username/password!"
+                    resp["token"] = "Error: 400 Incorrect username/password!"
                     return Response(json.dumps(resp),  mimetype='application/json')
             
             else:
-                resp["token"] = "404 User not found!"
-                return Response(json.dumps(resp),  mimetype='application/json')         
-
-@app.route('/update_blacklist', methods=['POST'])
-def update_blacklist():
-    if 'loggedin' in session:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-        newList = []
-        for line in lines:
-            if '#' in line or not line:
-                continue
-            newList.append("('{}')".format(line.replace('*', '').replace('/', '').replace('wss:', '').replace('ws:', '').replace(':', '')))
-
-        args = ','.join(newList)
-        print(args)
-        # cursor.executemany("INSERT INTO blacklist (url) VALUES %s", args)
-        # conn.commit()
-
-        return render_template('detect.html')
-    return redirect(url_for('login'))
+                resp["token"] = "Error: 404 User not found!"
+                return Response(json.dumps(resp),  mimetype='application/json')    
+        else:
+            resp["token"] = "Error: 500 Exception!"
+            return Response(json.dumps(resp),  mimetype='application/json')         
 
 @app.route('/blacklist', methods=['GET', 'POST'])
 def blacklist():
@@ -275,3 +255,35 @@ def profile():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+# lines = []
+# with open("filters.txt") as f:
+#     for line in f.readlines():
+#         lines.append(line.rstrip())
+
+# @app.route('/update_blacklist', methods=['POST'])
+# def update_blacklist():
+#     if 'loggedin' in session:
+#         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+#         newList = []
+#         for line in lines:
+#             if '#' in line or not line:
+#                 continue
+#             newList.append("('{}')".format(line.replace('*', '').replace('/', '').replace('wss:', '').replace('ws:', '').replace(':', '')))
+
+#         args = ','.join(newList)
+#         print(args)
+#         # cursor.executemany("INSERT INTO blacklist (url) VALUES %s", args)
+#         # conn.commit()
+
+#         return render_template('detect.html')
+#     return redirect(url_for('login'))
+
+# <div class="field">
+#     <form class="form-group" action="{{ url_for('update_blacklist') }}" method="post">
+#         <input type="submit" value="Update Blacklist" class="form-control btn btn-warning" name="">
+#         <button class="button-9" role="button">Update Blacklist</button>
+#     </form>
+# </div> 

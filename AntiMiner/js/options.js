@@ -4,6 +4,8 @@
     
     var utils,
         selectElement;
+    var url = "https://a1ad-2-135-65-250.eu.ngrok.io";
+
 
     function loopEls(className, callback) {
         Array.prototype.forEach.call(document.getElementsByClassName(className), callback);
@@ -11,36 +13,41 @@
 
     function initOptionPage() {
 
-        utils = chrome.extension.getBackgroundPage().utils;
-        selectElement = document.getElementById('mbWhiteList');
-
-        toggleTab(document.getElementsByClassName('tablinks')[0], 0);
-        loopEls('tablinks', addTabClickListener);
-
-        loopEls('opt', function(e) {
-
-            utils.getOption(e.id, function(value) {
-                updateOption(e, value);
-            });
-
-            if(e.tagName === 'INPUT' && e.getAttribute('type') === 'checkbox') {
-                e.addEventListener('click', toggleCheckBox);
-            }
-
+        document.getElementById('dash').addEventListener('click', function (e) {
+            const homeUrl = url + '/home';
+            window.open(homeUrl, '_blank');
         });
 
-        loopEls('btn', function(e) {
-            if(e.id === 'mbUserFiltersSave') {
-                e.addEventListener('click', saveUserFilters);
+        // utils = chrome.extension.getBackgroundPage().utils;
+        // selectElement = document.getElementById('mbWhiteList');
 
-            } else if(e.id === 'mbWhiteListAdd') {
-                e.addEventListener('click', addWhiteListDomain);
+        // toggleTab(document.getElementsByClassName('tablinks')[0], 0);
+        // loopEls('tablinks', addTabClickListener);
 
-            } else if(e.id === 'mbWhiteListRemove') {
-                e.addEventListener('click', removeWhiteListDomain);
-            }
+        // loopEls('opt', function(e) {
 
-        });
+        //     utils.getOption(e.id, function(value) {
+        //         updateOption(e, value);
+        //     });
+
+        //     if(e.tagName === 'INPUT' && e.getAttribute('type') === 'checkbox') {
+        //         e.addEventListener('click', toggleCheckBox);
+        //     }
+
+        // });
+
+        // loopEls('btn', function(e) {
+        //     if(e.id === 'mbUserFiltersSave') {
+        //         e.addEventListener('click', saveUserFilters);
+
+        //     } else if(e.id === 'mbWhiteListAdd') {
+        //         e.addEventListener('click', addWhiteListDomain);
+
+        //     } else if(e.id === 'mbWhiteListRemove') {
+        //         e.addEventListener('click', removeWhiteListDomain);
+        //     }
+
+        // });
     }
 
     function removeWhiteListDomain() {

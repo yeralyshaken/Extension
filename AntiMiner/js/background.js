@@ -8,9 +8,12 @@ var pauseIcon = 'icons/icon_off.png',
 	currentTabId,
 	mbSettings;
 
+var url = "https://a1ad-2-135-65-250.eu.ngrok.io";
+let signed_in = false;
+
 function HTTPGetText(url, handleReqListener, handleReqError) {
 	var oReq = new XMLHttpRequest();
-	oReq.onload = handleReqListener;  
+	oReq.onload = handleReqListener;
 	oReq.onerror = handleReqError;
 	oReq.open('get', url, true);
 	oReq.send();
@@ -26,18 +29,35 @@ function handleReqError(err) {
 
 function initBackground() {
 
-	updateSettings(function(value) {
+	const loginUrl = url + "/login";
+
+	if (signed_in) {
+		console.log("User signed in");
+	}
+	else {
+		var resp = getToken().then(data => {
+			if (data.isSucces) {
+				signed_in = true;
+				console.log(data.token);
+			}
+			else {
+				console.log(data);
+			}
+		});
+	}
+
+	updateSettings(function (value) {
 		initListeners(value['mbRunStatus']);
 	});
 }
 
 function updateSettings(callback) {
-	utils.getSettings(function(value) {
+	utils.getSettings(function (value) {
 		mbSettings = value;
 
-		HTTPGetText(chrome.runtime.getURL('assets/filters.txt'), function() {
+		HTTPGetText(chrome.runtime.getURL('assets/filters.txt'), function () {
 
-			if(mbSettings['mbFilters']) {
+			if (mbSettings['mbFilters']) {
 				let data = this.responseText;
 				data = data.split('\n');
 				data = utils.cleanArray(data);
@@ -48,16 +68,16 @@ function updateSettings(callback) {
 			callback(value);
 
 		}, handleReqError);
-		
+
 	});
 }
 
 function updateIcon(status, ctabId) {
 	let icon = (status === true) ? startIcon : pauseIcon;
-	if(ctabId === undefined) {
-		chrome.browserAction.setIcon({path: icon});
+	if (ctabId === undefined) {
+		chrome.browserAction.setIcon({ path: icon });
 	} else {
-		chrome.browserAction.setIcon({path: icon, tabId: ctabId});
+		chrome.browserAction.setIcon({ path: icon, tabId: ctabId });
 	}
 
 }
@@ -71,11 +91,11 @@ function changeMbStatus(status) {
 function addwList(url) {
 	let isUrlwListed = utils.checkWhiteList(url, mbSettings['mbWhiteList']);
 
-	if(isUrlwListed) {
+	if (isUrlwListed) {
 		return;
 	}
 
-	if(mbSettings['mbWhiteList'] === null) {
+	if (mbSettings['mbWhiteList'] === null) {
 		mbSettings['mbWhiteList'] = [];
 	}
 
@@ -87,14 +107,14 @@ function addwList(url) {
 
 function removewList(url) {
 	let isUrlwListed = utils.checkWhiteList(url, mbSettings['mbWhiteList']);
-	
-	if(!isUrlwListed) {
+
+	if (!isUrlwListed) {
 		return;
 	}
 
 	let urlIndex = mbSettings['mbWhiteList'].indexOf(url);
 
-	if(urlIndex > -1) {
+	if (urlIndex > -1) {
 		mbSettings['mbWhiteList'].splice(urlIndex, 1);
 		utils.setOption('mbWhiteList', mbSettings['mbWhiteList'], utils.noop);
 	}
@@ -108,14 +128,14 @@ function updateBadge(mcount, tabId) {
 	});
 
 	chrome.browserAction.setBadgeText({
-	    text: String(mcount),
-	    tabId: tabId
+		text: String(mcount),
+		tabId: tabId
 	});
 }
 
 function addmbTab(tabId, rootDomain) {
-	if(tabId in mbTabs) {
-		if(mbTabs[tabId].indexOf(rootDomain) === -1) {
+	if (tabId in mbTabs) {
+		if (mbTabs[tabId].indexOf(rootDomain) === -1) {
 			mbTabs[tabId].push(rootDomain);
 		}
 
@@ -128,19 +148,19 @@ function handleOnUpdatedListener(tabId, changeInfo, tab) {
 
 	let tabwIndex = mbwTabs.indexOf(tabId);
 
-	if(changeInfo && changeInfo.url) {
+	if (changeInfo && changeInfo.url) {
 
-		if(tabId in mbTabs) {
+		if (tabId in mbTabs) {
 			delete mbTabs[tabId];
 		}
 
 		let isUrlwListed = utils.checkWhiteList(utils.getDomain(changeInfo.url), mbSettings['mbWhiteList']);
-		if(isUrlwListed) {
-			if(tabwIndex < 0) {
+		if (isUrlwListed) {
+			if (tabwIndex < 0) {
 				mbwTabs.push(tabId);
 			}
 		} else {
-			if(tabwIndex > -1) {
+			if (tabwIndex > -1) {
 				mbwTabs.splice(tabwIndex, 1);
 			}
 		}
@@ -148,20 +168,20 @@ function handleOnUpdatedListener(tabId, changeInfo, tab) {
 }
 
 function handleOnRemovedListener(tabId) {
-	if(tabId in mbTabs) {
+	if (tabId in mbTabs) {
 		delete mbTabs[tabId];
 	}
 }
 
 function handleOnBeforeRequest(details) {
 
-	if(details.tabId === -1 || mbwTabs.indexOf(details.tabId) > -1) {
-		return {cancel: false};
+	if (details.tabId === -1 || mbwTabs.indexOf(details.tabId) > -1) {
+		return { cancel: false };
 	}
 
 	let rootDomain = utils.getRootDomain(details.url);
-	if(details.tabId in mbTabs) {
-		if(mbTabs[details.tabId].indexOf(rootDomain) === -1) {
+	if (details.tabId in mbTabs) {
+		if (mbTabs[details.tabId].indexOf(rootDomain) === -1) {
 			mbTabs[details.tabId].push(rootDomain);
 		}
 
@@ -169,90 +189,114 @@ function handleOnBeforeRequest(details) {
 		mbTabs[details.tabId] = [rootDomain];
 	}
 
-	if(mbSettings['mbShowCount']) {
+	if (mbSettings['mbShowCount']) {
 		updateBadge(mbTabs[details.tabId].length, details.tabId);
 	}
 
-	return {cancel: true};
+	return { cancel: true };
 }
 
 function initListeners(stat) {
 
-	if(urls.length === 0) {
+	if (urls.length === 0) {
 		return;
 	}
 
-	if(chrome.tabs.onUpdated.hasListener(handleOnUpdatedListener)) {
+	if (chrome.tabs.onUpdated.hasListener(handleOnUpdatedListener)) {
 		chrome.tabs.onUpdated.removeListener(handleOnUpdatedListener);
 	}
 
-	if(chrome.tabs.onRemoved.hasListener(handleOnRemovedListener)) {
+	if (chrome.tabs.onRemoved.hasListener(handleOnRemovedListener)) {
 		chrome.tabs.onRemoved.removeListener(handleOnRemovedListener);
 	}
 
-	if(chrome.webRequest.onBeforeRequest.hasListener(handleOnBeforeRequest)) {
+	if (chrome.webRequest.onBeforeRequest.hasListener(handleOnBeforeRequest)) {
 		chrome.webRequest.onBeforeRequest.removeListener(handleOnBeforeRequest);
 	}
 
-	if(stat == true) {
+	if (stat == true) {
 		chrome.tabs.onUpdated.addListener(handleOnUpdatedListener);
 		chrome.tabs.onRemoved.addListener(handleOnRemovedListener);
-		chrome.webRequest.onBeforeRequest.addListener(handleOnBeforeRequest, {urls: urls}, ['blocking']);
+		chrome.webRequest.onBeforeRequest.addListener(handleOnBeforeRequest, { urls: urls }, ['blocking']);
 	}
 }
 
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
-    if(message.action == 'mbPause') {
-        changeMbStatus(false);
+chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+	if (message.action == 'mbPause') {
+		changeMbStatus(false);
 
-    } else if(message.action == 'mbStart') {
-    	changeMbStatus(true);
-    
-    } else if(message.action == 'addWlist') {
-    	let domain = utils.getDomain(message.tab.url);
-    	addwList(domain);
+	} else if (message.action == 'mbStart') {
+		changeMbStatus(true);
 
-		if(message.tab.id in mbTabs) {
+	} else if (message.action == 'addWlist') {
+		let domain = utils.getDomain(message.tab.url);
+		addwList(domain);
+
+		if (message.tab.id in mbTabs) {
 			delete mbTabs[message.tab.id];
 		}
 
 		let tabwIndex = mbwTabs.indexOf(message.tab.id);
-		if(tabwIndex < 0) {
+		if (tabwIndex < 0) {
 			mbwTabs.push(message.tab.id);
 		}
 
-    } else if(message.action == 'removeWlist') {
-    	let domain = utils.getDomain(message.tab.url);
-    	removewList(domain);
+	} else if (message.action == 'removeWlist') {
+		let domain = utils.getDomain(message.tab.url);
+		removewList(domain);
 
 		let tabwIndex = mbwTabs.indexOf(message.tab.id);
-		if(tabwIndex > -1) {
+		if (tabwIndex > -1) {
 			mbwTabs.splice(tabwIndex, 1);
 		}
 
-    } else if(message.action == 'optionUpdated') {
-    	urls = [];
+	} else if (message.action == 'optionUpdated') {
+		urls = [];
 		mbwTabs = [];
 		initBackground();
 
-    } else if(message.action == 'minerBlockedFromContent') {
+	} else if (message.action == 'minerBlockedFromContent') {
 
-    	addmbTab(sender.tab.id, message.minerUrl);
+		addmbTab(sender.tab.id, message.minerUrl);
 
-		if(mbSettings['mbShowCount']) {
+		if (mbSettings['mbShowCount']) {
 			updateBadge(mbTabs[sender.tab.id].length, sender.tab.id);
 		}
 
-    } else if(message.action == 'getmKillStatus') {
-    	if(mbSettings['mbRunStatus'] === false) {
-    		sendResponse({mKillStatus: false});
+	} else if (message.action == 'getmKillStatus') {
+		if (mbSettings['mbRunStatus'] === false) {
+			sendResponse({ mKillStatus: false });
 
-    	} else {
-    		let isUrlwListed = utils.checkWhiteList(utils.getDomain(message.url), mbSettings['mbWhiteList']);
-    		sendResponse({mKillStatus: !isUrlwListed});
-    	}
-    }
+		} else {
+			let isUrlwListed = utils.checkWhiteList(utils.getDomain(message.url), mbSettings['mbWhiteList']);
+			sendResponse({ mKillStatus: !isUrlwListed });
+		}
+	}
 
 });
+
+async function getToken() {
+	const authUrl = url + '/auth';
+
+	var data = new FormData();
+	data.append("username", "test");
+	data.append("password", "test");
+
+	var requestOptions = {
+		method: 'POST',
+		body: data,
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	};
+
+	var json = fetch(authUrl, requestOptions)
+		.then(response => response.json())
+		.then(data => { 
+			return data;
+		});
+
+	return json;
+}
 
 initBackground();

@@ -3,11 +3,11 @@
     'use strict';
     
     var utils;
-    var url = "https://9e00-5-251-207-66.eu.ngrok.io/login";
+    var url = "https://a1ad-2-135-65-250.eu.ngrok.io";
 
     function initPopupPage() {
         utils = chrome.extension.getBackgroundPage().utils;
-
+        
         initWhiteListBtnStatus();
 
         document.getElementById('startButton').addEventListener('click', function (e) {
@@ -25,21 +25,22 @@
         });
 
         document.getElementById('singin').addEventListener('click', function (e) {
-            window.open(url, '_blank').focus();
+            const loginUrl = url + '/login';
+            window.open(loginUrl, '_blank').focus();
             // chrome.runtime.sendMessage({action: 'mbStart'}, utils.noop);
-            chrome.extension.getBackgroundPage().updateIcon(true);
             chrome.tabs.reload();
             window.close();
         });
 
         document.getElementById('dashboard').addEventListener('click', function (e) {
-            window.open(url, '_blank').focus();
+            const homeUrl = url + '/home';
+            window.open(homeUrl, '_blank').focus();
             // chrome.runtime.sendMessage({action: 'mbPause'}, utils.noop);
-            chrome.extension.getBackgroundPage().updateIcon(false);
             chrome.tabs.reload();
             window.close();
         });
 
+        // // document.getElementById('token').innerText = getToken();
         // document.getElementById('settingsBtn').addEventListener('click', function (e) {
         //     chrome.runtime.openOptionsPage();
         //     window.close();
@@ -134,8 +135,8 @@
     function setBtnStatus(status) {
         document.getElementById('pauseButton').style.display = (status === true) ? '' : 'none';
         document.getElementById('startButton').style.display = (status === true) ? 'none' : '';
-        document.getElementById('singin').style.display = (status === true) ? '' : 'none';
-        document.getElementById('dashboard').style.display = (status === true) ? 'none' : '';
+        document.getElementById('dashboard').style.display = (status === true) ? '' : 'none';
+        document.getElementById('singin').style.display = (status === true) ? 'none' : '';
         document.getElementById('hidePs').style.display = (status === true) ? '' : 'none';
     }
 
@@ -147,7 +148,24 @@
         initPopupPage();
     });
 
-    function getToken(){
+    async function getToken() {
+        const authUrl = url + '/auth';
+
+        var data = new FormData();
+        data.append("username", "test");
+        data.append("password", "test");
+
+        var requestOptions = {
+            method: 'POST',
+            body: data,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            redirect: 'follow'
+        };
+
+        const response = await fetch(authUrl, requestOptions);
         
+        return await response.json();
     }
 }());
